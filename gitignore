@@ -1,0 +1,17 @@
+# Dependencies — created when you run npm install locally
+node_modules/
+
+# Environment variables — NEVER commit API keys
+.env
+.env.local
+.env*.local
+
+# Vercel internal folder
+.vercel/
+
+# Mac junk
+.DS_Store
+
+# Editor folders
+.vscode/
+.idea/
