@@ -1,6 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const SYSTEM_PROMPT = `
 You are Gourav's personal AI assistant, embedded on his portfolio website.
@@ -214,23 +214,29 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "message field required" });
   }
 
-  // Gemini uses "model" instead of "assistant" for role
   const geminiHistory = history.slice(-10).map((h) => ({
     role: h.role === "assistant" ? "model" : "user",
     parts: [{ text: String(h.content).slice(0, 2000) }],
   }));
 
   try {
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash-latest",
-      systemInstruction: SYSTEM_PROMPT,
+    const contents = [
+      ...geminiHistory,
+      { role: "user", parts: [{ text: message.slice(0, 1000) }] },
+    ];
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      config: {
+        systemInstruction: SYSTEM_PROMPT,
+        maxOutputTokens: 600,
+      },
+      contents,
     });
 
-    const chat = model.startChat({ history: geminiHistory });
-    const result = await chat.sendMessage(message.slice(0, 1000));
-    const reply = result.response.text();
-
+    const reply = response.text;
     return res.status(200).json({ reply });
+
   } catch (err) {
     console.error("Gemini API error:", err);
     return res.status(500).json({
